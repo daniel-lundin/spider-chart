@@ -1,31 +1,35 @@
-var jsdom = require('jsdom');
-var d3 = require('d3');
+'use strict';
 
-var dom = jsdom.jsdom();
+const jsdom = require('jsdom');
+const d3 = require('d3');
 
-var colors = ['rgba(0, 0, 255, 0.8)', 'rgba(255, 0, 0, 0.8)', 'green'];
-var data = [
+const dom = jsdom.jsdom();
+
+const colors = ['rgba(0, 0, 255, 0.6)', 'rgba(255, 0, 0, 0.6)', 'green'];
+const labels = ['foobar', 'shizzle', 'my', 'dizzle', 'old', 'hedgehog'];
+const dataSeries = [
   [7, 7, 2, 5, 3, 3],
-  [5, 5, 1, 4, 2, 2]
+  [5, 5, 1, 7, 2, 2]
 ];
-var width = 400;
-var height = 400;
+const width = 400;
+const height = 400;
 
 function dataToSpiderCoords(data) {
-  var len = data.length;
-  var centerX = width/2;
-  var centerY = height/2;
-  var spiderCoords =  data.map(function(d, index) {
+  const len = data.length;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = 0.8 * (width / 2);
+  const spiderCoords =  data.map(function(d, index) {
     // Polar coordinates
-    var r = 1/7 + (d - 1) / 7;
-    var phi = index / len * 2 * Math.PI - Math.PI / 2;
+    const r = 1 / 7 + (d - 1) / 7;
+    const phi = index / len * 2 * Math.PI - Math.PI / 2;
     // Covert to Cartesian coordinates
-    var x = r * Math.cos(phi);
-    var y = r * Math.sin(phi);
+    const x = r * Math.cos(phi);
+    const y = r * Math.sin(phi);
 
     return {
-      x: centerX + x * (width / 2),
-      y: centerY + y * (width / 2)
+      x: centerX + x * radius,
+      y: centerY + y * radius
     };
   });
   // Make it repeatable
@@ -33,45 +37,85 @@ function dataToSpiderCoords(data) {
 }
 
 
-var spiderCoords = dataToSpiderCoords(data);
-
 function createSvg() {
-  var svg = d3.select(dom.body)
+  const svg = d3.select(dom.body)
       .append('svg')
       .attr('width', width)
       .attr('height', height);
   return svg;
 }
 
-var lineFunction = d3.svg.line()
+const lineFunction = d3.svg.line()
   .x(function(d) { return d.x; })
   .y(function(d) { return d.y; })
   .interpolate('linear');
 
 function plotSpiderCoords(data, svg, strokeColor, fillColor) {
-  var path = svg.append('path')
-      .attr('d', lineFunction(data))
-      .attr('stroke', strokeColor)
-      .attr('stroke-width', 2)
-      .attr('fill', fillColor);
+  svg.append('path')
+    .attr('d', lineFunction(data))
+    .attr('stroke', strokeColor)
+    .attr('stroke-width', 1)
+    .attr('fill', fillColor);
 }
 
+function generateNumberArray(number, length) {
+  return Array.apply(null, { length: length }).map(function() { return number; });
+}
+
+function xToTextAnchor(x) {
+  if (Math.abs(width / 2 - x) < 20) {
+    return 'middle';
+  }
+  if (width / 2 - x < 0) {
+    return 'start';
+  }
+  return 'end';
+
+}
+
+function plotLabels(svg) {
+  // Plot labels
+  const edgePositions = dataToSpiderCoords(generateNumberArray(7, labels.length));
+  const textAttributes = labels.map(function(label, i) {
+    return {
+      cx: edgePositions[i].x,
+      cy: edgePositions[i].y,
+      text: label,
+      textAnchor: xToTextAnchor(edgePositions[i].x)
+    };
+  });
+  svg.selectAll('text')
+    .data(textAttributes)
+    .enter()
+    .append('text')
+    .attr('text-anchor', function(d) { return d.textAnchor; })
+    .attr('x', function(d) { return d.cx; })
+    .attr('y', function(d) { return d.cy; })
+    .text( function (d) { return d.text; })
+    .attr('font-family', 'sans-serif')
+    .attr('font-size', '20px')
+    .attr('fill', 'black');
+}
+
+
 //console.log(spiderCoords);
-var svg = createSvg();
+const svg = createSvg();
 
 // Plot grid lines
 [1, 2, 3, 4, 5, 6, 7].forEach(function(number) {
-  var len = data[0].length;
-  var numberArray = Array.apply(null, { length: len }).map(function() { return number; });
-  var spiderCoords = dataToSpiderCoords(numberArray);
-  plotSpiderCoords(spiderCoords, svg, 'orange', 'none');
+  const len = dataSeries[0].length;
+  const numberArray = generateNumberArray(number, len);
+  const spiderCoords = dataToSpiderCoords(numberArray);
+  plotSpiderCoords(spiderCoords, svg, 'gray', 'none');
 });
 
-data.forEach(function(d, index) {
-  var spiderCoords = dataToSpiderCoords(d);
+plotLabels(svg, labels);
+
+dataSeries.forEach(function(d, index) {
+  const spiderCoords = dataToSpiderCoords(d);
   plotSpiderCoords(spiderCoords, svg, colors[index], colors[index]);
 });
 
-var html = d3.select(dom.body).html();
+const html = d3.select(dom.body).html();
 console.log('<html><body>' + html + '</body></html>');
 
