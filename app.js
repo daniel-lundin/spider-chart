@@ -19,7 +19,7 @@ function dataToSpiderCoords(data) {
   const centerX = width / 2;
   const centerY = height / 2;
   const radius = 0.8 * (width / 2);
-  const spiderCoords =  data.map(function(d, index) {
+  const spiderCoords =  data.map((d, index) => {
     // Polar coordinates
     const r = 1 / 7 + (d - 1) / 7;
     const phi = index / len * 2 * Math.PI - Math.PI / 2;
@@ -46,8 +46,8 @@ function createSvg() {
 }
 
 const lineFunction = d3.svg.line()
-  .x(function(d) { return d.x; })
-  .y(function(d) { return d.y; })
+  .x((d) => d.x)
+  .y((d) => d.y)
   .interpolate('linear');
 
 function plotSpiderCoords(data, svg, strokeColor, fillColor) {
@@ -59,7 +59,7 @@ function plotSpiderCoords(data, svg, strokeColor, fillColor) {
 }
 
 function generateNumberArray(number, length) {
-  return Array.apply(null, { length: length }).map(function() { return number; });
+  return Array.apply(null, { length: length }).map(() => number);
 }
 
 function xToTextAnchor(x) {
@@ -76,22 +76,21 @@ function xToTextAnchor(x) {
 function plotLabels(svg) {
   // Plot labels
   const edgePositions = dataToSpiderCoords(generateNumberArray(7, labels.length));
-  const textAttributes = labels.map(function(label, i) {
-    return {
-      cx: edgePositions[i].x,
-      cy: edgePositions[i].y,
-      text: label,
-      textAnchor: xToTextAnchor(edgePositions[i].x)
-    };
-  });
+  const textAttributes = labels.map((label, i) => ({
+    cx: edgePositions[i].x,
+    cy: edgePositions[i].y,
+    text: label,
+    textAnchor: xToTextAnchor(edgePositions[i].x)
+  }));
+
   svg.selectAll('text')
     .data(textAttributes)
     .enter()
     .append('text')
-    .attr('text-anchor', function(d) { return d.textAnchor; })
-    .attr('x', function(d) { return d.cx; })
-    .attr('y', function(d) { return d.cy; })
-    .text( function (d) { return d.text; })
+    .attr('text-anchor', (d) => d.textAnchor)
+    .attr('x', (d) => d.cx)
+    .attr('y', (d) => d.cy)
+    .text((d) => d.text)
     .attr('font-family', 'sans-serif')
     .attr('font-size', '20px')
     .attr('fill', 'black');
