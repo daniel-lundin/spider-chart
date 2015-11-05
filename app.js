@@ -18,7 +18,7 @@ function dataToSpiderCoords(data) {
   const len = data.length;
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = 0.8 * (width / 2);
+  const radius = 0.7 * (width / 2);
   const spiderCoords =  data.map((d, index) => {
     // Polar coordinates
     const r = 1 / 7 + (d - 1) / 7;
@@ -40,17 +40,18 @@ function dataToSpiderCoords(data) {
 function createSvg() {
   const svg = d3.select(dom.body)
       .append('svg')
-      .attr('width', width)
-      .attr('height', height);
+      .attr('viewBox', '0 0 ' + width + ' ' + height)
+      .attr('width', 2 * width)
+      .attr('height', 2 * height);
   return svg;
 }
 
-const lineFunction = d3.svg.line()
-  .x((d) => d.x)
-  .y((d) => d.y)
-  .interpolate('linear');
-
 function plotSpiderCoords(data, svg, strokeColor, fillColor) {
+  const lineFunction = d3.svg.line()
+    .x((d) => d.x)
+    .y((d) => d.y)
+    .interpolate('linear');
+
   svg.append('path')
     .attr('d', lineFunction(data))
     .attr('stroke', strokeColor)
@@ -91,9 +92,34 @@ function plotLabels(svg) {
     .attr('x', (d) => d.cx)
     .attr('y', (d) => d.cy)
     .text((d) => d.text)
-    .attr('font-family', 'sans-serif')
+    .attr('font-family', '\'Helvetice Neue\', sans-serif')
+    .attr('font-weight', '200')
     .attr('font-size', '20px')
-    .attr('fill', 'black');
+    .attr('fill', '#eee');
+}
+
+function plotLines(svg) {
+
+  const numberArray = generateNumberArray(8, labels.length);
+  const spiderCoords = dataToSpiderCoords(numberArray);
+  const lineFunction = d3.svg.line()
+    .x((d) => d.x)
+    .y((d) => d.y)
+    .interpolate('linear');
+
+  spiderCoords.forEach((point) => {
+    const path = [
+      { x: width / 2, y: height / 2 },
+      point
+    ];
+
+    svg.append('path')
+      .attr('d', lineFunction(path))
+      .attr('stroke', 'gray')
+      .attr('stroke-width', 1)
+      .attr('fill', 'none');
+  });
+
 }
 
 
@@ -108,13 +134,14 @@ const svg = createSvg();
   plotSpiderCoords(spiderCoords, svg, 'gray', 'none');
 });
 
+plotLines(svg, labels);
 plotLabels(svg, labels);
 
 dataSeries.forEach(function(d, index) {
   const spiderCoords = dataToSpiderCoords(d);
-  plotSpiderCoords(spiderCoords, svg, colors[index], colors[index]);
+  plotSpiderCoords(spiderCoords, svg, '#eee', colors[index]);
 });
 
 const html = d3.select(dom.body).html();
-console.log('<html><body>' + html + '</body></html>');
+console.log('<html><body style="background: #333">' + html + '</body></html>');
 
